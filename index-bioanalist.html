@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Laboratorio Clínico - Bioanalista</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f2f5;
+      padding: 20px;
+    }
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    section {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 24px;   
+    }
+    h1 { color: #2c3e50; text-align: center; }
+    h2 { color: #2c3e50; margin-top: 0; }
+    label { font-weight: bold; display: block; margin-top: 15px; }
+    input, select {
+      width: 100%; padding: 8px; margin-top: 5px;
+      border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;
+    }
+    button {
+      background: #2ecc71; color: white; border: none;
+      padding: 10px 16px; border-radius: 6px; cursor: pointer;
+      margin-top: 20px; width: 100%; font-size: 16px;
+    }
+    button:hover { background: #27ae60; }
+
+    /* ── Tabla de pendientes ── */
+    .tabla-pendientes {
+      width: 100%; border-collapse: collapse; margin-top: 8px;
+    }
+    .tabla-pendientes th,
+    .tabla-pendientes td {
+      padding: 10px 12px; text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+    .tabla-pendientes th {
+      background: #f0f2f5; color: #2c3e50; font-weight: bold;
+    }
+    .tabla-pendientes tr:hover td { background: #fafafa; }
+    .btn-registrar {
+      background: #3498db; color: white; border: none;
+      padding: 6px 14px; border-radius: 4px; cursor: pointer;
+      font-size: 13px; width: auto; margin-top: 0;
+    }
+    .btn-registrar:hover { background: #2980b9; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Bioanalista - Laboratorio Clínico</h1>
+
+    <!-- ① Lista de pendientes -->
+    <section>
+      <h2>Exámenes Pendientes</h2>
+      <div id="listaPendientes_contenido">
+        <p style="color:#888;">Cargando...</p>
+      </div>
+    </section>
+
+    <!-- ② Formulario de resultado (igual que antes) -->
+    <section id="examen">
+      <h2>Registrar Resultado</h2>
+      <div>
+        <label>Cédula del paciente:</label>
+        <input type="text" id="examen_inPacienteId" placeholder="Ej: 12345">
+      </div>
+      <div>
+        <label>Examen:</label>
+        <select id="examen_selExamen">
+          <option value="HEMO01">Hemoglobina - Bs.15</option>
+          <option value="GLUC02">Glucosa - Bs.10</option>
+          <option value="COL03">Colesterol - Bs.20</option>
+          <option value="UREA04">Urea - Bs.12</option>
+          <option value="CREA05">Creatinina - Bs.18</option>
+        </select>
+      </div>
+      <div>
+        <label>Resultado:</label>
+        <input type="text" id="examen_inResultado" placeholder="Ej: 12.5 mg/dL">
+      </div>
+      <button id="examen_btEnviar">Guardar Resultado</button>
+    </section>
+  </div>
+
+  <script type="module">
+    import Cl_cExamen          from "./dist/controllers/Cl_cExamen.js";
+    import Cl_vExamen          from "./dist/views/Cl_vExamen.js";
+    import Cl_cListaPendientes from "./dist/controllers/Cl_cListaPendientes.js";  
+    import Cl_vListaPendientes from "./dist/views/Cl_vListaPendientes.js";        
+
+    const vistaExamen = new Cl_vExamen();
+    const vistaLista  = new Cl_vListaPendientes();                                
+
+    new Cl_cExamen(vistaExamen);
+    new Cl_cListaPendientes(vistaLista, vistaExamen);                             
+
+    console.log("App Bioanalista iniciada");
+  </script>
+</body>
+</html>

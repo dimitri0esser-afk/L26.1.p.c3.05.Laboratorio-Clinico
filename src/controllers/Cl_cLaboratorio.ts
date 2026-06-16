@@ -1,0 +1,252 @@
+import { I_vLaboratorio } from "../interfaces/I_vLaboratorio.js";
+import Cl_sLaboratorio from "../services/Cl_sLaboratorio.js";
+import Cl_mLaboratorio from "../models/Cl_mLaboratorio.js";
+import Cl_sMockApi from "../services/Cl_sMockApi.js";  // ← NUEVA IMPORTACIÓN
+
+export default class Cl_cLaboratorio {
+  private vista: I_vLaboratorio;
+  private pacientes: any[] = [];
+  private examenesDisponibles: any[] = [];
+  private resultados: any[] = [];
+  private pacienteSeleccionadoId: string | null = null;
+  private modelo: Cl_mLaboratorio;
+
+  constructor(vista: I_vLaboratorio) {
+    this.vista = vista;
+    this.modelo = new Cl_mLaboratorio();
+    
+    // Obtener exámenes disponibles con fallback inmediato
+    this.examenesDisponibles = this.modelo.getExamenesDisponibles();
+    if (this.examenesDisponibles.length === 0) {
+      console.warn("Usando fallback para exámenes (constructor)");
+      this.examenesDisponibles = [
+        { id: "HEMO01", nombre: "Hemoglobina", costo: 15, valorReferencia: "" },
+        { id: "GLUC02", nombre: "Glucosa", costo: 10, valorReferencia: "" },
+        { id: "COL03", nombre: "Colesterol", costo: 20, valorReferencia: "" },
+        { id: "UREA04", nombre: "Urea", costo: 12, valorReferencia: "" },
+        { id: "CREA05", nombre: "Creatinina", costo: 18, valorReferencia: "" }
+      ];
+    }
+    console.log("Exámenes disponibles en constructor:", this.examenesDisponibles.length);
+    
+    this.vista.onNuevoPaciente(() => this.crearNuevoPaciente());
+    this.vista.onAsignarEstudios(() => this.asignarEstudios());
+    this.vista.onVerResultados(() => this.mostrarResultadosFinalizados());
+    this.vista.onImprimir(() => this.imprimirReporte());
+    this.vista.onSeleccionarPaciente((id) => this.seleccionarPaciente(id));
+    this.vista.onRegistrarPago(() => this.registrarPago());
+    this.vista.onGuardarPaciente((cedula, nombre) => this.guardarNuevoPaciente(cedula, nombre));
+    this.vista.onGuardarEstudios((estudios) => this.guardarEstudios(estudios));
+    this.vista.onBuscarResultados((tipoExamen, fecha) => this.buscarResultados(tipoExamen, fecha));
+    this.vista.onLimpiarBusqueda(() => this.limpiarBusqueda());
+    this.vista.onSeleccionarEstudio((nombreEstudio) => this.seleccionarEstudio(nombreEstudio));
+    
+    this.cargarDatos();
+  }
+
+  private extraerResultadosDesdePacientes(): any[] {
+    const todosResultados: any[] = [];
+    
+    this.pacientes.forEach(paciente => {
+      if (paciente.examenes && paciente.examenes.length > 0) {
+        paciente.examenes.forEach((examen: any) => {
+          if (examen.realizado && examen.valor) {
+            todosResultados.push({
+              pacienteId: paciente.cedula,
+              pacienteNombre: paciente.nombre,
+              examenId: examen.id,
+              examenNombre: examen.nombre,
+              valor: examen.valor,
+              fecha: examen.fecha || new Date(),
+              finalizado: true
+            });
+          }
+        });
+      }
+    });
+    
+    return todosResultados;
+  }
+
+  private async cargarDatos() {
+    const resultadoPacientes = await Cl_sLaboratorio.obtenerPacientes();
+    this.pacientes = resultadoPacientes.ok ? resultadoPacientes.data : [];
+    this.resultados = this.extraerResultadosDesdePacientes();
+    this.refrescarVista();
+    this.mostrarEstadisticas();
+  }
+
+  private mostrarEstadisticas(nombreEstudio?: string): void {
+    const stats = this.modelo.calcularEstadisticas(this.pacientes, nombreEstudio);
+    this.vista.mostrarEstadisticas(stats);
+  }
+
+  private seleccionarEstudio(nombreEstudio: string): void {
+    this.mostrarEstadisticas(nombreEstudio);
+  }
+
+  private refrescarVista() {
+    this.vista.mostrarPacientes(this.pacientes, this.pacientes.length);
+    if (this.pacienteSeleccionadoId) {
+      this.mostrarDetallesPaciente(this.pacienteSeleccionadoId);
+    } else {
+      this.vista.limpiarSeleccion();
+    }
+  }
+
+  private async seleccionarPaciente(id: string) {
+    this.pacienteSeleccionadoId = id;
+    this.mostrarDetallesPaciente(id);
+  }
+
+  private mostrarDetallesPaciente(id: string) {
+    const paciente = this.pacientes.find(p => p.id === id);
+    if (!paciente) return;
+    const estudios = paciente.examenes || [];
+    this.vista.mostrarEstudiosAsignados(estudios);
+    let monto = 0;
+    estudios.forEach((e: any) => {
+      if (!e.pagado) monto += e.costo || 0;
+    });
+    this.vista.mostrarCobranza(monto, monto === 0);
+  }
+
+  private crearNuevoPaciente() {
+    this.vista.mostrarModalPaciente();
+  }
+
+  private async guardarNuevoPaciente(cedula: string, nombre: string) {
+    if (!cedula || !nombre) {
+      alert("Complete todos los campos (Cédula, Nombre)");
+      return;
+    }
+    const existe = await Cl_sLaboratorio.existePaciente(cedula);
+    if (existe.existe) {
+      alert("Ya existe un paciente con esa cédula.");
+      return;
+    }
+    const nuevoPaciente = { cedula, nombre, examenes: [] };
+    const respuesta = await Cl_sLaboratorio.guardarPaciente(nuevoPaciente);
+    if (respuesta.ok) {
+      alert(`Paciente ${nombre} registrado exitosamente`);
+      await this.cargarDatos();
+    } else {
+      alert("Error al guardar el paciente");
+    }
+  }
+
+  // ============================================================
+  //  asignarEstudios() — CORREGIDO
+  //  Ahora carga el catálogo DIRECTAMENTE desde mockapi
+  //  al momento de abrir el modal, evitando el problema de
+  //  asincronía.
+  // ============================================================
+  private async asignarEstudios() {
+    if (!this.pacienteSeleccionadoId) {
+      alert("Primero seleccione un paciente de la tabla");
+      return;
+    }
+
+    console.log("Cargando catálogo desde mockapi...");
+
+    // Cargar catálogo DIRECTAMENTE desde mockapi al momento de abrir
+    const resultado = await Cl_sMockApi.getCatalogo();
+    
+    let examenes = [];
+    if (resultado.ok && resultado.data && resultado.data.length > 0) {
+      examenes = resultado.data.map((ex: any) => ({
+        id: ex.codigo || ex.id,
+        nombre: ex.nombre,
+        costo: ex.precio,
+        valorReferencia: ex.valorReferencia || ""
+      }));
+      console.log(`Catálogo cargado desde mockapi: ${examenes.length} exámenes`);
+    } else {
+      // Fallback si no hay conexión o catálogo vacío
+      examenes = [
+        { id: "HEMO01", nombre: "Hemoglobina", costo: 15, valorReferencia: "" },
+        { id: "GLUC02", nombre: "Glucosa", costo: 10, valorReferencia: "" },
+        { id: "COL03", nombre: "Colesterol", costo: 20, valorReferencia: "" },
+        { id: "UREA04", nombre: "Urea", costo: 12, valorReferencia: "" },
+        { id: "CREA05", nombre: "Creatinina", costo: 18, valorReferencia: "" }
+      ];
+      console.warn("Usando fallback local para exámenes");
+    }
+
+    this.vista.mostrarModalEstudios(examenes);
+  }
+
+  private async guardarEstudios(estudiosAsignados: any[]) {
+    const paciente = this.pacientes.find(p => p.id === this.pacienteSeleccionadoId);
+    if (paciente) {
+      paciente.examenes = [...(paciente.examenes || []), ...estudiosAsignados];
+      const respuesta = await Cl_sLaboratorio.actualizarPaciente(paciente.id, paciente);
+      if (respuesta.ok) {
+        let total = 0;
+        estudiosAsignados.forEach(e => total += e.costo);
+        alert(`Estudios asignados. Total a pagar: Bs. ${total}`);
+        await this.cargarDatos();
+      } else {
+        alert("Error al asignar estudios");
+      }
+    }
+  }
+
+  private async registrarPago() {
+    if (!this.pacienteSeleccionadoId) return;
+    const paciente = this.pacientes.find(p => p.id === this.pacienteSeleccionadoId);
+    if (!paciente) return;
+    let totalPendiente = 0;
+    paciente.examenes.forEach((e: any) => {
+      if (!e.pagado) totalPendiente += e.costo;
+    });
+    if (totalPendiente === 0) {
+      alert("No hay cobranza pendiente");
+      return;
+    }
+    paciente.examenes.forEach((e: any) => { e.pagado = true; });
+    const respuesta = await Cl_sLaboratorio.actualizarPaciente(paciente.id, paciente);
+    if (respuesta.ok) {
+      alert(`Pago de Bs. ${totalPendiente} registrado`);
+      await this.cargarDatos();
+    } else {
+      alert("Error al registrar pago");
+    }
+  }
+
+  private mostrarResultadosFinalizados() {
+    this.vista.mostrarResultados(this.resultados, this.resultados.length);
+  }
+
+  private imprimirReporte() {
+    if (this.resultados.length === 0) {
+      alert("No hay resultados para imprimir");
+      return;
+    }
+    this.vista.imprimirReporte(this.resultados);
+  }
+
+  private buscarResultados(tipoExamen: string, fecha: string): void {
+    let filtrados = [...this.resultados];
+    const textoBusqueda = tipoExamen.trim().toLowerCase();
+    if (textoBusqueda !== "") {
+      filtrados = filtrados.filter((resultado) => {
+        const nombreExamen = (resultado.examenNombre || resultado.examenId || "").toLowerCase();
+        return nombreExamen.includes(textoBusqueda);
+      });
+    }
+    if (fecha !== "") {
+      filtrados = filtrados.filter((resultado) => {
+        if (!resultado.fecha) return false;
+        const fechaResultado = new Date(resultado.fecha).toISOString().split("T")[0];
+        return fechaResultado === fecha;
+      });
+    }
+    this.vista.mostrarResultados(filtrados, this.resultados.length);
+  }
+
+  private limpiarBusqueda(): void {
+    this.vista.limpiarFiltrosBusqueda();
+    this.vista.mostrarResultados(this.resultados, this.resultados.length);
+  }
+}

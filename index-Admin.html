@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Laboratorio Clínico - Administración</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 20px; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    section { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    h1 { color: #2c3e50; text-align: center; }
+    button { background: #3498db; color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; margin: 5px; }
+    button:hover { background: #2980b9; }
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+    th { background: #ecf0f1; }
+    .info-panel { background: #ecf0f1; border-radius: 8px; padding: 15px; margin-top: 20px; }
+    #lab_divBuscador { background: #eaf4fb; border: 1px solid #aed6f1; border-radius: 8px; padding: 15px; margin-top: 20px; }
+    .buscador-fila { display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; }
+    .buscador-campo { display: flex; flex-direction: column; gap: 4px; }
+    .buscador-campo input { padding: 8px 10px; border: 1px solid #bdc3c7; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Administración - Laboratorio Clínico</h1>
+    <section id="laboratorio">
+      <div>
+        <button id="lab_btNuevoPaciente">Nuevo Paciente</button>
+        <button id="lab_btAsignarEstudios">Asignar Estudios</button>
+        <button id="lab_btVerResultados">Ver Resultados</button>
+        <button id="lab_btImprimir">Imprimir Reporte</button>
+      </div>
+      <hr>
+      <h3>Pacientes Registrados</h3>
+      <table>
+        <thead><tr><th>Cédula</th><th>Nombre</th><th>Acción</th></tr></thead>
+        <tbody id="lab_tbPacientes"></tbody>
+      </table>
+      <p><strong>Total pacientes:</strong> <span id="lab_lblCantidad">0</span></p>
+      <div id="lab_divEstudios" class="info-panel"></div>
+      <div id="lab_divCobranza" class="info-panel"></div>
+      <!-- ============================================================
+            PANEL DE ESTADÍSTICAS (Requerimiento agregado)
+            Muestra 3 indicadores:
+              1) Solicitudes e ingreso total por estudio
+              2) Porcentaje de exámenes finalizados
+              3) Promedio general de un estudio seleccionado
+            El contenido se llena dinámicamente desde
+            Cl_vLaboratorio.mostrarEstadisticas()
+           ============================================================ -->
+      <div id="lab_divEstadisticas" class="info-panel" style="margin-top: 20px;">
+        <h3>Estadísticas</h3>
+        <div id="lab_divEstadisticasContent">
+          <p style="color:#888;">Seleccione un estudio para ver estadísticas</p>
+        </div>
+      </div>
+      <div id="lab_divBuscador">
+        <h3>Buscar Resultados</h3>
+        <div class="buscador-fila">
+          <div class="buscador-campo">
+            <label>Tipo de Examen</label>
+            <input type="text" id="lab_inputTipoExamen" placeholder="Ej: Glucosa" style="width: 220px;">
+          </div>
+          <div class="buscador-campo">
+            <label>Fecha</label>
+            <input type="date" id="lab_inputFecha">
+          </div>
+          <button id="lab_btBuscar">Buscar</button>
+          <button id="lab_btLimpiarBusqueda">✖ Limpiar</button>
+        </div>
+        <p id="lab_lblResultadosBusqueda" style="font-size:13px; margin-top:8px;"></p>
+      </div>
+      <div id="lab_divResultados"></div>
+    </section>
+  </div>
+
+  <div id="modalPaciente" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
+    <div style="background:white; margin:100px auto; padding:20px; width:400px; border-radius:12px;">
+      <h3>Nuevo Paciente</h3>
+      <div style="margin-bottom:15px;"><label>Cédula:</label><input type="text" id="modal_cedula" style="width:100%; padding:8px;"></div>
+      <div style="margin-bottom:15px;"><label>Nombre:</label><input type="text" id="modal_nombre" style="width:100%; padding:8px;"></div>
+      <button id="modal_btnGuardar" style="background:#2ecc71; padding:10px;">Guardar</button>
+      <button id="modal_btnCancelar" style="background:#e74c3c; padding:10px;">Cancelar</button>
+    </div>
+  </div>
+
+  <div id="modalEstudios" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
+    <div style="background:white; margin:100px auto; padding:20px; width:450px; border-radius:12px;">
+      <h3>Asignar Estudios</h3>
+      <div id="modal_checkboxes" style="margin:15px 0;"></div>
+      <button id="modal_estudios_btnGuardar" style="background:#2ecc71;">Asignar</button>
+      <button id="modal_estudios_btnCancelar" style="background:#e74c3c;">Cancelar</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import Cl_cLaboratorio from "./dist/controllers/Cl_cLaboratorio.js";
+    import Cl_vLaboratorio from "./dist/views/Cl_vLaboratorio.js";
+    new Cl_cLaboratorio(new Cl_vLaboratorio());
+    console.log("App Administración iniciada");
+  </script>
+  <img id="botonSonido" 
+     src="./resources/huh picture.png" 
+     alt="Huh?"
+     style="position: fixed; bottom: 30px; right: 30px; width: 16px; height: 16px; cursor: pointer; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 1000;">
+
+    <script>
+        const sonido = new Audio('./resources/huh ._..mp3');
+        const boton = document.getElementById('botonSonido');
+        boton.addEventListener('click', function() {
+            sonido.play().catch(error => {
+                console.log('Error al reproducir:', error);
+            });
+        });
+    </script>
+
+</body>
+</html>

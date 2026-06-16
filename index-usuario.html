@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro de Paciente - Laboratorio Clínico</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #dbd8d8 0%, #2387da 100%); min-height: 100vh; padding: 20px; }
+    .container { max-width: 500px; margin: 0 auto; }
+    .card { background: white; border-radius: 16px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); margin-bottom: 20px; }
+    h1 { color: white; text-align: center; margin-bottom: 30px; }
+    h2 { color: #2c3e50; margin-bottom: 20px; border-bottom: 2px solid #0b39cf; padding-bottom: 10px; }
+    label { display: block; font-weight: bold; margin-top: 15px; margin-bottom: 5px; }
+    input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
+    button { width: 100%; background: #3498db; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; margin-top: 20px; }
+    button:hover { background: #b31370; }
+    .btn-success { background: #2ecc71; }
+    .btn-success:hover { background: #27ae60; }
+    .btn-danger { background: #e74c3c; }
+    .btn-danger:hover { background: #c0392b; }
+    .examen-item { background: #f8f9fa; border-radius: 8px; padding: 10px; margin: 10px 0; display: flex; align-items: center; }
+    .examen-item input { width: auto; margin-right: 10px; }
+    .examen-info { flex: 1; }
+    .examen-nombre { font-weight: bold; }
+    .examen-costo { color: #27ae60; font-size: 14px; }
+    .total { background: #ecf0f1; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center; }
+    .total .monto { font-size: 28px; color: #27ae60; font-weight: bold; }
+    .mensaje { padding: 10px; border-radius: 8px; margin: 10px 0; display: none; }
+    .mensaje.success { background: #d4edda; color: #155724; }
+    .mensaje.error { background: #f8d7da; color: #721c24; }
+    .acciones { display: flex; gap: 10px; margin-top: 20px; }
+    .acciones button { flex: 1; margin-top: 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Laboratorio Clínico</h1>
+    <div id="formularioPaciente" class="card">
+      <h2>Registro de Paciente</h2>
+      <div id="mensaje" class="mensaje"></div>
+      <label>Cédula / ID:</label><input type="text" id="cedula" placeholder="Ej: 12345678">
+      <label>Nombre Completo:</label><input type="text" id="nombre" placeholder="Ej: María González">
+      
+      <button id="btnGuardarDatos" class="btn-success">Guardar Mis Datos</button>
+    </div>
+    <div id="formularioEstudios" class="card" style="display:none;">
+      <h2>Seleccione sus Exámenes</h2>
+      <div id="listaExamenes"></div>
+      <div class="total"><h3>Total a Pagar</h3><div class="monto" id="totalMonto">Bs. 0</div></div>
+      <div class="acciones">
+        <button id="btnGuardarEstudios" class="btn-success">Guardar Exámenes</button>
+        <button id="btnSaltarEstudios" class="btn-danger">Saltar (después)</button>
+      </div>
+    </div>
+    <div id="resumenDatos" class="card" style="display:none;">
+      <h2>Datos del Paciente</h2>
+      <div id="datosGuardados"></div>
+      <div id="estudiosGuardados"></div>
+      <div id="totalGuardado"></div>
+    </div>
+  </div>
+  <script type="module">
+    import Cl_cUsuario from "./dist/controllers/Cl_cUsuario.js";
+    import Cl_vUsuario from "./dist/views/Cl_vUsuario.js";
+    new Cl_cUsuario(new Cl_vUsuario());
+    console.log("App Usuario iniciada");
+  </script>
+</body>
+</html>
