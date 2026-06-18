@@ -9,7 +9,8 @@ export default class Cl_mLaboratorio {
         if (this.cargando)
             return;
         this.cargando = true;
-        const resultado = await Cl_sMockApi.getCatalogo();
+        // ✅ CAMBIADO: getCatalogo() → getResultados()
+        const resultado = await Cl_sMockApi.getResultados();
         if (resultado.ok && resultado.data && resultado.data.length > 0) {
             // Convertir el catálogo al formato que usa la app
             this.examenesDisponibles = resultado.data.map((ex) => ({

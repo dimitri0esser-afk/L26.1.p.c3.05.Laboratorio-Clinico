@@ -1,7 +1,6 @@
 import Cl_sMockApi from "./Cl_sMockApi.js";
 
 export default class Cl_sExamen extends Cl_sMockApi {
-
   static async obtenerPacientes(): Promise<{ ok: boolean; data: any[] }> {
     return await this.getPacientes();
   }
@@ -19,7 +18,6 @@ export default class Cl_sExamen extends Cl_sMockApi {
     if (!resultado.ok) return { ok: false, data: [] };
 
     const pendientes: any[] = [];
-
     for (const paciente of resultado.data) {
       const examenesPendientes = (paciente.examenes || []).filter((e: any) => !e.realizado);
       for (const examen of examenesPendientes) {
@@ -31,7 +29,6 @@ export default class Cl_sExamen extends Cl_sMockApi {
         });
       }
     }
-
     return { ok: true, data: pendientes };
   }
 }

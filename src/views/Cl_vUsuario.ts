@@ -66,7 +66,8 @@ export default class Cl_vUsuario implements I_vUsuario {
 
   private async cargarCatalogo() {
     try {
-      const resultado = await Cl_sMockApi.getCatalogo();
+      // ✅ CAMBIADO: getCatalogo() → getResultados()
+      const resultado = await Cl_sMockApi.getResultados();
       
       if (resultado.ok && resultado.data && resultado.data.length > 0) {
         this.examenesDisponibles = resultado.data.map((ex: any) => ({

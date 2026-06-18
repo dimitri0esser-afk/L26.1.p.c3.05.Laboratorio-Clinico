@@ -1,6 +1,6 @@
 import Cl_sLaboratorio from "../services/Cl_sLaboratorio.js";
 import Cl_mLaboratorio from "../models/Cl_mLaboratorio.js";
-import Cl_sMockApi from "../services/Cl_sMockApi.js"; // ← NUEVA IMPORTACIÓN
+import Cl_sMockApi from "../services/Cl_sMockApi.js";
 export default class Cl_cLaboratorio {
     vista;
     pacientes = [];
@@ -132,9 +132,8 @@ export default class Cl_cLaboratorio {
             alert("Primero seleccione un paciente de la tabla");
             return;
         }
-        console.log("Cargando catálogo desde mockapi...");
-        // Cargar catálogo DIRECTAMENTE desde mockapi al momento de abrir
-        const resultado = await Cl_sMockApi.getCatalogo();
+        // ✅ Usar getResultados() (catálogo de exámenes)
+        const resultado = await Cl_sMockApi.getResultados();
         let examenes = [];
         if (resultado.ok && resultado.data && resultado.data.length > 0) {
             examenes = resultado.data.map((ex) => ({
@@ -143,18 +142,18 @@ export default class Cl_cLaboratorio {
                 costo: ex.precio,
                 valorReferencia: ex.valorReferencia || ""
             }));
-            console.log(`Catálogo cargado desde mockapi: ${examenes.length} exámenes`);
+            console.log(`✅ Catálogo cargado: ${examenes.length} exámenes`);
         }
         else {
-            // Fallback si no hay conexión o catálogo vacío
+            // Fallback
             examenes = [
-                { id: "HEMO01", nombre: "Hemoglobina", costo: 15, valorReferencia: "" },
-                { id: "GLUC02", nombre: "Glucosa", costo: 10, valorReferencia: "" },
-                { id: "COL03", nombre: "Colesterol", costo: 20, valorReferencia: "" },
-                { id: "UREA04", nombre: "Urea", costo: 12, valorReferencia: "" },
-                { id: "CREA05", nombre: "Creatinina", costo: 18, valorReferencia: "" }
+                { id: "HEMO01", nombre: "Hemoglobina", costo: 15 },
+                { id: "GLUC02", nombre: "Glucosa", costo: 10 },
+                { id: "COL03", nombre: "Colesterol", costo: 20 },
+                { id: "UREA04", nombre: "Urea", costo: 12 },
+                { id: "CREA05", nombre: "Creatinina", costo: 18 }
             ];
-            console.warn("Usando fallback local para exámenes");
+            console.warn("⚠️ Usando fallback local");
         }
         this.vista.mostrarModalEstudios(examenes);
     }
