@@ -20,7 +20,6 @@ export default class Cl_vLaboratorio {
     onGuardarEstudiosCallback = null;
     onBuscarResultadosCallback = null;
     onLimpiarBusquedaCallback = null;
-    onSeleccionarEstudioCallback = null;
     constructor() {
         this.vista = document.getElementById("laboratorio");
         this.btNuevoPaciente = document.getElementById("lab_btNuevoPaciente");
@@ -85,6 +84,7 @@ export default class Cl_vLaboratorio {
             });
         }
     }
+    // ============ EVENTOS ============
     onBuscarResultados(callback) {
         this.onBuscarResultadosCallback = callback;
     }
@@ -97,18 +97,9 @@ export default class Cl_vLaboratorio {
         if (this.inputFecha)
             this.inputFecha.value = "";
         if (this.lblResultadosBusqueda)
-            this.lblResultadosBusqueda.textContent = "";
+            this.lblResultadosBusqueda.textContent = "0 resultado(s) en total";
     }
-    actualizarContadorResultados(cantidad, total) {
-        if (!this.lblResultadosBusqueda)
-            return;
-        if (cantidad === total) {
-            this.lblResultadosBusqueda.textContent = `${total} resultado(s) en total`;
-        }
-        else {
-            this.lblResultadosBusqueda.textContent = `Mostrando ${cantidad} de ${total} resultado(s)`;
-        }
-    }
+    // ============ MODALES ============
     mostrarModalPaciente() {
         const modal = document.getElementById("modalPaciente");
         if (modal)
@@ -131,7 +122,7 @@ export default class Cl_vLaboratorio {
                     this.ocultarModalPaciente();
                 }
                 else {
-                    alert("Complete todos los campos (Cédula, Nombre)");
+                    alert("Complete todos los campos (Cedula, Nombre)");
                 }
             };
         }
@@ -150,14 +141,14 @@ export default class Cl_vLaboratorio {
             container.innerHTML = "";
             examenes.forEach((examen) => {
                 container.innerHTML += `
-        <div style="margin: 8px 0;">
-          <label>
-            <input type="checkbox" value="${examen.id}" data-nombre="${examen.nombre}" data-costo="${examen.costo}">
-            ${examen.nombre} - Bs.${examen.costo}
-            ${examen.valorReferencia ? `<span style="color:#888; font-size:12px;"> (Ref: ${examen.valorReferencia})</span>` : ""}
-          </label>
-        </div>
-      `;
+          <div style="margin: 8px 0;">
+            <label>
+              <input type="checkbox" value="${examen.id}" data-nombre="${examen.nombre}" data-costo="${examen.costo}">
+              ${examen.nombre} - Bs.${examen.costo}
+              ${examen.valorReferencia ? `<span style="color:#888; font-size:12px;"> (Ref: ${examen.valorReferencia})</span>` : ""}
+            </label>
+          </div>
+        `;
             });
         }
         const btnGuardar = document.getElementById("modal_estudios_btnGuardar");
@@ -191,85 +182,8 @@ export default class Cl_vLaboratorio {
         if (modal)
             modal.style.display = "none";
     }
-    get pacienteSeleccionadoId() {
-        return null;
-    }
-    // ============================================================
-    //  onSeleccionarEstudio() – REQUERIMIENTO AGREGADO
-    //  Registra el callback que se ejecutará cuando el usuario
-    //  cambie la selección del dropdown de estudios en las
-    //  estadísticas. El callback recibe el nombre del estudio.
-    // ============================================================
-    onSeleccionarEstudio(callback) {
-        this.onSeleccionarEstudioCallback = callback;
-    }
-    // ============================================================
-    //  mostrarEstadisticas()
-    //  REQUERIMIENTO AGREGADO - Visualiza 3 indicadores en el panel
-    //  #lab_divEstadisticasContent del HTML:
-    //
-    //  1) Solicitudes e Ingreso por Estudio
-    //     → Tabla con nombre, cantidad de solicitudes e ingreso total
-    //       (ingreso = suma de costos de exámenes pagados)
-    //
-    //  2) Porcentaje de Exámenes Finalizados
-    //     → Muestra qué % del total de exámenes tiene realizado=true
-    //
-    //  3) Promedio del Estudio SELECCIONADO por el usuario
-    //     → Dropdown (<select>) para elegir qué estudio promediar
-    //     → Muestra el promedio del estudio seleccionado
-    //
-    //  Parámetro: estadisticas - objeto con propiedades calculadas
-    //    en Cl_cLaboratorio.calcularYMostrarEstadisticas()
-    // ============================================================
-    mostrarEstadisticas(estadisticas) {
-        const container = document.getElementById("lab_divEstadisticasContent");
-        if (!container)
-            return;
-        let html = "";
-        // 1. Solicitudes e ingreso total por estudio
-        html += `<h4 style="margin-bottom:8px;">Solicitudes e Ingreso por Estudio</h4>`;
-        html += `<table border="1" style="width:100%; border-collapse:collapse; margin-bottom:15px; font-size:14px;">
-      <thead><tr><th>Estudio</th><th>Solicitudes</th><th>Ingreso Total</th></tr></thead>
-      <tbody>`;
-        estadisticas.solicitudesPorEstudio.forEach(e => {
-            html += `<tr><td>${e.nombre}</td><td>${e.solicitudes}</td><td>Bs. ${e.ingresoTotal.toFixed(2)}</td></tr>`;
-        });
-        html += `</tbody></table>`;
-        // 2. Porcentaje de exámenes finalizados
-        html += `<h4 style="margin-bottom:8px;">Porcentaje de Exámenes Finalizados</h4>`;
-        html += `<p><strong>${estadisticas.porcentajeFinalizados.toFixed(1)}%</strong> de los exámenes están en estado "Finalizado"</p>`;
-        // 3. Promedio del estudio SELECCIONADO por el usuario
-        html += `<h4 style="margin-bottom:8px;">Promedio de un Estudio</h4>`;
-        html += `<div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:8px;">`;
-        html += `<label for="selEstudioPromedio"><strong>Seleccione un estudio:</strong></label>`;
-        html += `<select id="selEstudioPromedio" style="padding:6px 10px; border:1px solid #bdc3c7; border-radius:6px; font-size:14px;">`;
-        html += `<option value="">-- Seleccione --</option>`;
-        estadisticas.nombresEstudios.forEach(nombre => {
-            const selected = nombre === estadisticas.estudioSeleccionado ? " selected" : "";
-            html += `<option value="${nombre}"${selected}>${nombre}</option>`;
-        });
-        html += `</select></div>`;
-        if (estadisticas.promedioEstudioSeleccionado !== null) {
-            html += `<p><strong>${estadisticas.estudioSeleccionado}:</strong> Promedio = <strong>${estadisticas.promedioEstudioSeleccionado.toFixed(2)}</strong></p>`;
-        }
-        else if (estadisticas.estudioSeleccionado) {
-            html += `<p style="color:#e67e22;">⚠ El estudio "${estadisticas.estudioSeleccionado}" no tiene valores numéricos registrados para calcular promedio.</p>`;
-        }
-        else {
-            html += `<p style="color:#888;">Seleccione un estudio del menú desplegable para ver su promedio.</p>`;
-        }
-        container.innerHTML = html;
-        // Vincular el evento change del <select> al callback
-        const selEstudio = document.getElementById("selEstudioPromedio");
-        if (selEstudio && this.onSeleccionarEstudioCallback) {
-            selEstudio.onchange = () => {
-                if (this.onSeleccionarEstudioCallback) {
-                    this.onSeleccionarEstudioCallback(selEstudio.value);
-                }
-            };
-        }
-    }
+    // ============ MOSTRAR DATOS ============
+    get pacienteSeleccionadoId() { return null; }
     onNuevoPaciente(callback) {
         if (this.btNuevoPaciente)
             this.btNuevoPaciente.onclick = callback;
@@ -325,132 +239,109 @@ export default class Cl_vLaboratorio {
         }
     }
     mostrarEstudiosAsignados(estudios) {
-        if (!this.divEstudios)
+        const ul = document.getElementById("lab_ulEstudios");
+        if (!ul)
             return;
+        ul.innerHTML = "";
         if (!estudios || estudios.length === 0) {
-            this.divEstudios.innerHTML = "<p>No hay estudios asignados para este paciente</p>";
+            ul.innerHTML = "<li>No hay estudios asignados para este paciente</li>";
             return;
         }
-        let htmlContent = "<h3>Estudios Asignados</h3><ul>";
         estudios.forEach((e) => {
-            htmlContent += `<li>${e.id || e.examenId} - ${e.nombre || ''} - ${e.realizado ? 'Realizado' : 'Pendiente'}</li>`;
+            const li = document.createElement("li");
+            li.textContent = `${e.id || e.examenId} - ${e.nombre || ''} - ${e.realizado ? 'Realizado' : 'Pendiente'}`;
+            ul.appendChild(li);
         });
-        htmlContent += "</ul>";
-        this.divEstudios.innerHTML = htmlContent;
     }
     mostrarCobranza(monto, pagado) {
-        if (!this.divCobranza)
-            return;
-        this.divCobranza.innerHTML = `
-      <h3>Cobranza</h3>
-      <p>Monto total: Bs. ${monto}</p>
-      <p>Estado: ${pagado ? 'Pagado' : 'Pendiente'}</p>
-      ${!pagado ? '<button id="btnRegistrarPago">Registrar Pago</button>' : ''}
-    `;
+        const spanMonto = document.getElementById("lab_spanMonto");
+        const spanEstado = document.getElementById("lab_spanEstado");
         const btnPago = document.getElementById("btnRegistrarPago");
-        if (btnPago && this.onRegistrarPagoCallback) {
-            btnPago.onclick = () => this.onRegistrarPagoCallback();
+        if (spanMonto)
+            spanMonto.textContent = monto.toString();
+        if (spanEstado)
+            spanEstado.textContent = pagado ? 'Pagado' : 'Pendiente';
+        if (btnPago) {
+            btnPago.style.display = pagado ? 'none' : 'block';
+            btnPago.onclick = () => {
+                if (this.onRegistrarPagoCallback)
+                    this.onRegistrarPagoCallback();
+            };
         }
     }
     mostrarResultados(resultados, totalSinFiltro) {
-        if (!this.divResultados)
+        const tbody = document.getElementById("lab_tbodyResultados");
+        if (!tbody)
             return;
+        tbody.innerHTML = "";
         if (!resultados || resultados.length === 0) {
-            this.divResultados.innerHTML = "<p>No hay resultados que coincidan con la búsqueda</p>";
-            if (totalSinFiltro !== undefined) {
-                this.actualizarContadorResultados(0, totalSinFiltro);
-            }
-            return;
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td colspan="5">No hay resultados que coincidan con la busqueda</td>`;
+            tbody.appendChild(tr);
         }
-        let htmlContent = `
-      <h3>Resultados Finalizados</h3>
-      <table border='1'>
-        <thead>
-          <tr>
-            <th>Cédula</th>
-            <th>Nombre</th>
-            <th>Examen</th>
-            <th>Resultado</th>
-            <th>Fecha</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
-        resultados.forEach((r) => {
-            htmlContent += `
-        <tr>
+        else {
+            resultados.forEach((r) => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
           <td>${r.pacienteId}</td>
           <td>${r.pacienteNombre || 'N/A'}</td>
           <td>${r.examenNombre || r.examenId}</td>
           <td>${r.valor}</td>
           <td>${new Date(r.fecha).toLocaleDateString()}</td>
-        </tr>
-      `;
-        });
-        htmlContent += "</tbody></table>";
-        this.divResultados.innerHTML = htmlContent;
-        if (totalSinFiltro !== undefined) {
-            this.actualizarContadorResultados(resultados.length, totalSinFiltro);
+        `;
+                tbody.appendChild(tr);
+            });
+        }
+        if (this.lblResultadosBusqueda) {
+            const cantidad = resultados?.length || 0;
+            if (cantidad === totalSinFiltro) {
+                this.lblResultadosBusqueda.textContent = `${totalSinFiltro} resultado(s) en total`;
+            }
+            else {
+                this.lblResultadosBusqueda.textContent = `Mostrando ${cantidad} de ${totalSinFiltro} resultado(s)`;
+            }
         }
     }
     imprimirReporte(resultados) {
         const ventana = window.open('', '_blank');
         if (ventana) {
             ventana.document.write(`
-        <html>
-        <head>
-          <title>Reporte Laboratorio Clinico</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            table { border-collapse: collapse; width: 100%; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-            th { background-color: #4CAF50; color: white; }
-          </style>
-        </head>
-        <body>
-          <h1>Laboratorio Clinico - Reporte de Resultados</h1>
-          <p>Fecha: ${new Date().toLocaleString()}</p>
-          <table border="1">
-            <thead>
-              <tr>
-                <th>Paciente</th>
-                <th>Nombre</th>
-                <th>Examen</th>
-                <th>Resultado</th>
-                <th>Fecha</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${resultados.map(r => `
-                <tr>
-                  <td>${r.pacienteId}</td>
-                  <td>${r.pacienteNombre || 'N/A'}</td>
-                  <td>${r.examenNombre || r.examenId}</td>
-                  <td>${r.valor}</td>
-                  <td>${new Date(r.fecha).toLocaleDateString()}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </body>
-        </html>
+        <html><head><title>Reporte Laboratorio Clinico</title>
+        <style>body{font-family:Arial,sans-serif;margin:20px;}table{border-collapse:collapse;width:100%;}th,td{border:1px solid #ddd;padding:8px;text-align:left;}th{background-color:#4CAF50;color:white;}</style>
+        </head><body>
+        <h1>Laboratorio Clinico - Reporte de Resultados</h1>
+        <p>Fecha: ${new Date().toLocaleString()}</p>
+        <table border="1">
+          <thead><tr><th>Paciente</th>
+          <th>Nombre</th>
+          <th>Examen</th>
+          <th>Resultado</th>
+          <th>Fecha</th>
+          </tr></thead>
+          <tbody>${resultados.map(r => `<tr><td>${r.pacienteId}</td><td>${r.pacienteNombre || 'N/A'}</td><td>${r.examenNombre || r.examenId}</td><td>${r.valor}</td><td>${new Date(r.fecha).toLocaleDateString()}</td></tr>`).join('')}</tbody>
+        </table>
+        </body></html>
       `);
             ventana.print();
         }
     }
-    mostrar() {
-        if (this.vista)
-            this.vista.hidden = false;
-    }
-    ocultar() {
-        if (this.vista)
-            this.vista.hidden = true;
-    }
+    mostrar() { if (this.vista)
+        this.vista.hidden = false; }
+    ocultar() { if (this.vista)
+        this.vista.hidden = true; }
     limpiarSeleccion() {
-        if (this.divEstudios)
-            this.divEstudios.innerHTML = "";
-        if (this.divCobranza)
-            this.divCobranza.innerHTML = "";
+        const ul = document.getElementById("lab_ulEstudios");
+        if (ul)
+            ul.innerHTML = "";
+        const spanMonto = document.getElementById("lab_spanMonto");
+        const spanEstado = document.getElementById("lab_spanEstado");
+        const btnPago = document.getElementById("btnRegistrarPago");
+        if (spanMonto)
+            spanMonto.textContent = "0";
+        if (spanEstado)
+            spanEstado.textContent = "Pendiente";
+        if (btnPago)
+            btnPago.style.display = "none";
     }
 }
 //# sourceMappingURL=Cl_vLaboratorio.js.map

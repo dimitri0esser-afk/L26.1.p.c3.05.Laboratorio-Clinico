@@ -11,10 +11,9 @@ export default class Cl_cLaboratorio {
     constructor(vista) {
         this.vista = vista;
         this.modelo = new Cl_mLaboratorio();
-        // Obtener exámenes disponibles con fallback inmediato
         this.examenesDisponibles = this.modelo.getExamenesDisponibles();
         if (this.examenesDisponibles.length === 0) {
-            console.warn("Usando fallback para exámenes (constructor)");
+            console.warn("Usando fallback para examenes (constructor)");
             this.examenesDisponibles = [
                 { id: "HEMO01", nombre: "Hemoglobina", costo: 15, valorReferencia: "" },
                 { id: "GLUC02", nombre: "Glucosa", costo: 10, valorReferencia: "" },
@@ -23,7 +22,7 @@ export default class Cl_cLaboratorio {
                 { id: "CREA05", nombre: "Creatinina", costo: 18, valorReferencia: "" }
             ];
         }
-        console.log("Exámenes disponibles en constructor:", this.examenesDisponibles.length);
+        console.log("Examenes disponibles en constructor:", this.examenesDisponibles.length);
         this.vista.onNuevoPaciente(() => this.crearNuevoPaciente());
         this.vista.onAsignarEstudios(() => this.asignarEstudios());
         this.vista.onVerResultados(() => this.mostrarResultadosFinalizados());
@@ -34,7 +33,6 @@ export default class Cl_cLaboratorio {
         this.vista.onGuardarEstudios((estudios) => this.guardarEstudios(estudios));
         this.vista.onBuscarResultados((tipoExamen, fecha) => this.buscarResultados(tipoExamen, fecha));
         this.vista.onLimpiarBusqueda(() => this.limpiarBusqueda());
-        this.vista.onSeleccionarEstudio((nombreEstudio) => this.seleccionarEstudio(nombreEstudio));
         this.cargarDatos();
     }
     extraerResultadosDesdePacientes() {
@@ -63,14 +61,6 @@ export default class Cl_cLaboratorio {
         this.pacientes = resultadoPacientes.ok ? resultadoPacientes.data : [];
         this.resultados = this.extraerResultadosDesdePacientes();
         this.refrescarVista();
-        this.mostrarEstadisticas();
-    }
-    mostrarEstadisticas(nombreEstudio) {
-        const stats = this.modelo.calcularEstadisticas(this.pacientes, nombreEstudio);
-        this.vista.mostrarEstadisticas(stats);
-    }
-    seleccionarEstudio(nombreEstudio) {
-        this.mostrarEstadisticas(nombreEstudio);
     }
     refrescarVista() {
         this.vista.mostrarPacientes(this.pacientes, this.pacientes.length);
@@ -103,12 +93,12 @@ export default class Cl_cLaboratorio {
     }
     async guardarNuevoPaciente(cedula, nombre) {
         if (!cedula || !nombre) {
-            alert("Complete todos los campos (Cédula, Nombre)");
+            alert("Complete todos los campos (Cedula, Nombre)");
             return;
         }
         const existe = await Cl_sLaboratorio.existePaciente(cedula);
         if (existe.existe) {
-            alert("Ya existe un paciente con esa cédula.");
+            alert("Ya existe un paciente con esa cedula.");
             return;
         }
         const nuevoPaciente = { cedula, nombre, examenes: [] };
@@ -121,18 +111,11 @@ export default class Cl_cLaboratorio {
             alert("Error al guardar el paciente");
         }
     }
-    // ============================================================
-    //  asignarEstudios() — CORREGIDO
-    //  Ahora carga el catálogo DIRECTAMENTE desde mockapi
-    //  al momento de abrir el modal, evitando el problema de
-    //  asincronía.
-    // ============================================================
     async asignarEstudios() {
         if (!this.pacienteSeleccionadoId) {
             alert("Primero seleccione un paciente de la tabla");
             return;
         }
-        // ✅ Usar getResultados() (catálogo de exámenes)
         const resultado = await Cl_sMockApi.getResultados();
         let examenes = [];
         if (resultado.ok && resultado.data && resultado.data.length > 0) {
@@ -142,10 +125,9 @@ export default class Cl_cLaboratorio {
                 costo: ex.precio,
                 valorReferencia: ex.valorReferencia || ""
             }));
-            console.log(`✅ Catálogo cargado: ${examenes.length} exámenes`);
+            console.log(`Catalogo cargado: ${examenes.length} examenes`);
         }
         else {
-            // Fallback
             examenes = [
                 { id: "HEMO01", nombre: "Hemoglobina", costo: 15 },
                 { id: "GLUC02", nombre: "Glucosa", costo: 10 },
@@ -153,7 +135,7 @@ export default class Cl_cLaboratorio {
                 { id: "UREA04", nombre: "Urea", costo: 12 },
                 { id: "CREA05", nombre: "Creatinina", costo: 18 }
             ];
-            console.warn("⚠️ Usando fallback local");
+            console.warn("Usando fallback local");
         }
         this.vista.mostrarModalEstudios(examenes);
     }
